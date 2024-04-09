@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  startup-backend:
+    image: startup/nestjs:latest
+    depends_on:
+      - postgres-db
+    ports:
+      - "3000:3000" 
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+    networks:
+      - startup-network
+
+  startup-frontend:
+    image: startup/nextjs:latest
+    ports:
+      - "4000:4000" 
+    networks:
+      - startup-network
+
+  postgres-db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./create_db.sh:/docker-entrypoint-initdb.d/create_db.sh
+      - ./create_user.sh:/docker-entrypoint-initdb.d/create_user.sh
+    networks:
+      - startup-network
+
+networks:
+  startup-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

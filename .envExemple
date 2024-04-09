@@ -1,0 +1,88 @@
+#App
+RUN_PORT=3000
+NODE_ENV=development
+
+#APIs
+API_BASE_URL_CHATGPT=http://api.example.com/users
+API_BASE_URL_WHATSAPP=http://api.example.com/posts
+API_BASE_URL_STRIPE=http://api.example.com/posts
+
+
+# Google Auth
+GOOGLE_CLIENT_ID=api-key
+GOOGLE_CLIENT_SECRET=api-key
+
+#JWT
+JWT_SECRET=jwt-Key
+
+# Use esse comando no terminal do ubunto ou WSL com ubunto para gerar a sua JWT
+# openssl rand -base64 32
+
+
+#Mailer
+MAIL_HOST=
+MAIL_PORT=
+MAIL_SECURE=
+MAIL_USER=
+MAIL_PASSWORD=
+MAIL_FROM=
+
+# MAIL_HOST: O endereço do servidor SMTP que você usará para enviar e-mails. Este é o domínio do seu provedor de serviços de e-mail. Por exemplo, para o Gmail, seria algo como smtp.gmail.com.
+
+# MAIL_PORT: O número da porta usada para a conexão com o servidor SMTP. As portas mais comuns são 25, 465, e 587. A porta específica a ser usada depende do seu provedor de e-mail e se você está usando uma conexão segura (SSL/TLS) ou não.
+
+# MAIL_SECURE: Um valor booleano (true/false) que indica se a conexão com o servidor SMTP deve ser feita usando uma camada de segurança (SSL/TLS). Normalmente, true é usado para a porta 465, e false é usado para a porta 587.
+
+# MAIL_USER: O nome de usuário usado para autenticar no servidor SMTP. Dependendo do seu provedor de e-mail, isso pode ser seu endereço de e-mail completo.
+
+# MAIL_PASSWORD: A senha associada ao nome de usuário (MAIL_USER) para autenticar no servidor SMTP. Devido a razões de segurança, é crucial manter esta informação protegida.
+
+# MAIL_FROM: O endereço de e-mail que aparecerá no campo "De" dos e-mails enviados. Isso informa aos destinatários quem enviou o e-mail.
+
+
+# Database
+DB_HOST=host-ip
+DB_PORT=5432
+DB_USERNAME=username
+DB_PASSWORD=password
+DB_DATABASE=data-base-name
+
+# CRIANDO DATABASE com PostgreSQL
+
+# Instalar o PostgreSQL e seus componentes:
+# sudo apt install postgresql postgresql-contrib
+
+# Verificar se o serviço do PostgreSQL está ativo:
+# sudo systemctl status postgresql.service
+
+# Se o serviço não estiver ativo, você pode iniciá-lo com:
+# sudo systemctl start postgresql.service
+
+# Habilitar o serviço do PostgreSQL para iniciar automaticamente na inicialização do sistema:
+# sudo systemctl enable postgresql.service
+
+# Acessar o PostgreSQL com o usuário postgres:
+# Agora que o servidor do PostgreSQL está instalado, você pode acessar o prompt do PostgreSQL como o usuário postgres:
+# sudo -u postgres psql
+
+# Crie o banco de dados com o comando SQL:
+# CREATE DATABASE "nome-da-sua-database";
+
+# Crie um usuário e defina uma senha para ele:
+# CREATE USER ruptra_db WITH PASSWORD 'sua-senha-aqui';
+
+# Conceda todos os privilégios para este usuário no banco de dados que você criou:
+# GRANT ALL PRIVILEGES ON DATABASE "nome-da-sua-database" TO NomeDoSeuUsuário;
+
+# Saia do prompt do PostgreSQL usando:
+# sql
+
+# INFORMAÇÃO ÚTIL
+# Aqui está como você pode parar o servidor PostgreSQL no WSL:
+# sudo service postgresql stop 
+
+# Teste a conexão manualmente usando o psql:
+# psql -U username -d database_name -h localhost -W
+# Digite a senha quando solicitado.
+
+# Pronto database criada
