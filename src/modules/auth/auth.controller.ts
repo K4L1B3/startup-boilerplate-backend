@@ -45,6 +45,7 @@ export class AuthController {
     return this.authService.verificationCode(verifyCode);
   }
 
+  @UseGuards(AuthGuard())
   @Patch('/updatePass')
   async updatePass(@Body() resetPassDto: ResetPassDto) {
     return this.authService.updatePass(

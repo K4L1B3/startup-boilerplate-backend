@@ -11,10 +11,12 @@ import { jwtConfig } from './config/security/jwt.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { ChatModule } from './modules/chat/chat.module';
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 @Module({
   imports: [
-    //DotEnvs
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: './.env',
@@ -30,14 +32,21 @@ import { MailerModule } from '@nestjs-modules/mailer';
         { use: AcceptLanguageResolver, options: ['en', 'pt-BR'] }, // Lista de idiomas suportados
       ],
     }),
-    //Data Base connection
-    TypeOrmModule.forRoot(databaseConfig),
+    TypeOrmModule.forRoot({
+      ...databaseConfig,
+      entities: [
+        path.join(
+          __dirname,
+          isProduction ? '**/*.entity.js' : '**/*.entity.ts',
+        ),
+      ],
+    }),
     JwtModule.register(jwtConfig),
     HttpModule.forRoot(),
-    // Other modules...
     UserModule,
     AuthModule,
     MailerModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [],
