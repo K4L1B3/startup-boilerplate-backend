@@ -126,6 +126,6 @@ export class User {
   })
   @IsString()
   @IsNotEmpty()
-  @Column({ default: 'direct' })
+  @Column({ default: 'direct' || 'google' })
   authType: string;
 }

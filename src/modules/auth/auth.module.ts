@@ -16,7 +16,7 @@ import { CodePass } from './entity/codePass.entity';
   imports: [
     TypeOrmModule.forFeature([CodePass]),
     UserModule,
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register(jwtConfig),
     EmailMailerModule,
   ],

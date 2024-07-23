@@ -44,16 +44,20 @@ export class AuthService {
   }
 
   async register(registerUserDto: RegisterUserDto) {
-    // Gerar um salt aleatório para o hash
+    const verifyEmail = await this.userService.getUserByEmail(
+      registerUserDto.email,
+    );
+
+    if (verifyEmail) {
+      throw new Error('Email already exists');
+    }
+
     const salt = await bcrypt.genSalt();
-    // Criptografar a senha usando o salt
     const hashedPassword = await bcrypt.hash(registerUserDto.password, salt);
-    // Substituir a senha no DTO com a senha criptografada
     const user = {
       ...registerUserDto,
       password: hashedPassword,
     };
-    // Usar o UserService para criar um novo usuário
     return this.userService.createUser(user);
   }
 
@@ -67,7 +71,13 @@ export class AuthService {
 
     let user = await this.userService.getUserByEmail(email);
 
-    if (!user) {
+    if (user) {
+      if (user.authType !== 'google') {
+        throw new Error(
+          'User with this email already exists and is linked to another account type',
+        );
+      }
+    } else {
       const newUser = {
         name,
         email,
@@ -78,9 +88,11 @@ export class AuthService {
       };
       user = await this.userService.createGoogleLogin(newUser);
     }
+
     const payload = { username: user.email, sub: user.id };
+    const accessToken = this.jwtService.sign(payload);
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
     };
   }
 

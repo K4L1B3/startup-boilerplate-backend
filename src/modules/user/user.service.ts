@@ -23,8 +23,8 @@ export class UserService {
     return this.userRepository.findOne({ where: { id } });
   }
 
-  getUserByEmail(email: string): Promise<User> {
-    return this.userRepository.findOne({ where: { email } });
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return await this.userRepository.findOne({ where: { email } });
   }
 
   getRequestUserByEmail(email: EmailDto): Promise<User> {
@@ -32,11 +32,20 @@ export class UserService {
   }
 
   async createUser(userData: userDto): Promise<User> {
+    const existingUser = await this.getUserByEmail(userData.email);
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
     const newUser = this.userRepository.create(userData);
     return await this.userRepository.save(newUser);
   }
 
   async createGoogleLogin(userData: externalAuthDto): Promise<User> {
+    const existingUser = await this.getUserByEmail(userData.email);
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
+
     const newUser = this.userRepository.create(userData);
     return await this.userRepository.save(newUser);
   }

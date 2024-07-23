@@ -13,7 +13,7 @@ import { join } from 'path';
       useFactory: async (configService: ConfigService) => ({
         transport: {
           host: configService.get<string>('MAIL_HOST'),
-          port: +configService.get<number>('MAIL_PORT'),
+          port: configService.get<number>('MAIL_PORT'),
           secure: configService.get<boolean>('MAIL_SECURE'),
           auth: {
             user: configService.get<string>('MAIL_USER'),
