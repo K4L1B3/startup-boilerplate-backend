@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Chat } from './entity/chat.entity';
 import { CreateChatDto } from './dto/createChat.dto';
 import OpenAI from 'openai';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 @Injectable()
 export class ChatService {
@@ -20,18 +21,25 @@ export class ChatService {
     createChatDto: CreateChatDto,
     userId: number,
   ): Promise<Chat> {
-    const { prompt, chatStatus } = createChatDto;
+    const { prompt } = createChatDto;
 
-    const response = await this.ChatGenerateResponse(prompt);
+    try {
+      const response = await this.ChatGenerateResponse(prompt);
 
-    const chat = this.chatRepository.create({
-      userId,
-      name: this.generateChatName(prompt),
-      menssageHistory: `User: ${prompt}\nAI: ${response}`,
-      chatStatus: chatStatus ?? true,
-    });
+      const chat = this.chatRepository.create({
+        userId,
+        name: this.generateChatName(prompt),
+        menssageHistory: `User: ${prompt} AI: ${response}`,
+        newAnswer: `AI: ${response}`,
+        chatStart: new Date(),
+        chatEnd: new Date(),
+      });
 
-    return await this.chatRepository.save(chat);
+      return await this.chatRepository.save(chat);
+    } catch (error) {
+      console.error('Error saving chat: ', error);
+      throw new NotFoundException('Failed to create a chat');
+    }
   }
 
   async getChat(id: number): Promise<Chat> {
@@ -48,12 +56,15 @@ export class ChatService {
       throw new Error('Chat not found');
     }
 
-    const response = await this.ChatGenerateResponse(newPrompt);
+    chat.menssageHistory += `\nUser: ${newPrompt}`;
 
-    // Adicionar a nova mensagem ao histórico de mensagens
-    chat.menssageHistory += `\nUser: ${newPrompt}\nAI: ${response}`;
+    const response = await this.ChatGenerateResponse(chat.menssageHistory);
 
-    return this.chatRepository.save(chat);
+    chat.menssageHistory += `\nAI: ${response}`;
+
+    chat.newAnswer = `\nAI: ${response}`;
+
+    return await this.chatRepository.save(chat);
   }
 
   async deleteChat(id: number): Promise<void> {
@@ -75,12 +86,19 @@ export class ChatService {
 
   async ChatGenerateResponse(prompt: string): Promise<string> {
     try {
+      const messages = prompt.split('\n').map((line) => {
+        if (line.startsWith('User:')) {
+          return { role: 'user', content: line.replace('User: ', '') };
+        } else if (line.startsWith('AI:')) {
+          return { role: 'assistant', content: line.replace('AI: ', '') };
+        } else {
+          return { role: 'system', content: line };
+        }
+      });
+
       const response = await this.openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant.' },
-          { role: 'user', content: prompt },
-        ],
+        messages: messages as ChatCompletionMessageParam[],
         max_tokens: 150,
       });
 
@@ -91,23 +109,13 @@ export class ChatService {
     }
   }
 
-  // async ChatGenerateResponse(prompt: string): Promise<string> {
-  //   try {
-  //     const response = await this.openai.completions.create({
-  //       model: 'gpt-4',
-  //       prompt: prompt,
-  //       max_tokens: 150,
-  //     });
-  //     return response.choices[0].text.trim();
-  //   } catch (error) {
-  //     console.error('Error generating response from OpenAI: ', error);
-  //     throw new Error('Failed to generate response from OpenAI');
-  //   }
-  // }
-
   private generateChatName(prompt: string): string {
     const maxLength = 25;
     const cleanPrompt = prompt.replace(/[^\w\s]/g, '');
-    return cleanPrompt.substring(0, maxLength).trim();
+    let chatName = cleanPrompt.substring(0, maxLength).trim();
+    if (cleanPrompt.length > maxLength) {
+      chatName += '...';
+    }
+    return chatName;
   }
 }

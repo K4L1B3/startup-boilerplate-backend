@@ -5,17 +5,8 @@ import {
   IsNotEmpty,
   IsNumber,
   IsString,
-  IsBoolean,
 } from 'class-validator';
-import {
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Timestamp,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('Chat')
 export class Chat {
@@ -53,7 +44,7 @@ export class Chat {
     example: 'Histórico de mensagens do chat...',
     description: 'Histórico de mensagens do chat',
   })
-  @Column('text')
+  @Column()
   @IsString()
   @IsNotEmpty()
   @IsDefined()
@@ -63,7 +54,11 @@ export class Chat {
     example: '2024-06-20T12:34:56.789Z',
     description: 'Data e hora de início do chat',
   })
-  @CreateDateColumn({ name: 'chatStart', type: 'timestamp' })
+  @Column({
+    name: 'chatStart',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   @IsDate()
   @IsNotEmpty()
   @IsDefined()
@@ -73,19 +68,23 @@ export class Chat {
     example: '2024-06-20T13:34:56.789Z',
     description: 'Data e hora de término do chat',
   })
-  @UpdateDateColumn({ name: 'chatEnd', type: 'timestamp' })
+  @Column({
+    name: 'chatEnd',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   @IsDate()
   @IsNotEmpty()
   @IsDefined()
   chatEnd: Date;
 
   @ApiProperty({
-    example: true,
-    description: 'Status do chat (ativo/inativo)',
+    example:
+      'Os Estados Unidos ganhou do Japão na Segunda Guerra Mundial, que ocorreu de 1939 a 1945.',
+    description: 'Resposta mais recente do chat',
   })
-  @Column({ default: true })
-  @IsBoolean()
+  @Column()
+  @IsString()
   @IsNotEmpty()
-  @IsDefined()
-  chatStatus: boolean;
+  newAnswer: string;
 }

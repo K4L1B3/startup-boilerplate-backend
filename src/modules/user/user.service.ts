@@ -15,20 +15,20 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  findAllUsers(): Promise<User[]> {
-    return this.userRepository.find();
+  async findAllUsers(): Promise<User[]> {
+    return await this.userRepository.find();
   }
 
-  getUserById(id: number) {
-    return this.userRepository.findOne({ where: { id } });
+  async getUserById(id: number) {
+    return await this.userRepository.findOne({ where: { id } });
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     return await this.userRepository.findOne({ where: { email } });
   }
 
-  getRequestUserByEmail(email: EmailDto): Promise<User> {
-    return this.userRepository.findOne({ where: { email: email.email } });
+  async getRequestUserByEmail(email: EmailDto): Promise<User> {
+    return await this.userRepository.findOne({ where: { email: email.email } });
   }
 
   async createUser(userData: userDto): Promise<User> {
@@ -65,7 +65,7 @@ export class UserService {
     return this.userRepository.findOneBy({ id: userId });
   }
 
-  deleteUser(userId: number) {
-    return this.userRepository.delete(userId);
+  async deleteUser(userId: number) {
+    return await this.userRepository.delete(userId);
   }
 }

@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
-
+import { IsString, IsNotEmpty, IsDefined, IsDate } from 'class-validator';
 export class CreateChatDto {
   @ApiProperty({
     example: 'Qual é a constante de Kepler?',
@@ -10,12 +9,17 @@ export class CreateChatDto {
   @IsNotEmpty()
   prompt: string;
 
-  @ApiProperty({
-    example: true,
-    description: 'Status inicial do chat (ativo/inativo)',
-    default: true,
-  })
-  @IsBoolean()
-  @IsOptional()
-  chatStatus?: boolean;
+  @IsString()
+  @IsNotEmpty()
+  newAnswer: string;
+
+  @IsDate()
+  @IsNotEmpty()
+  @IsDefined()
+  chatStart: Date;
+
+  @IsDate()
+  @IsNotEmpty()
+  @IsDefined()
+  chatEnd: Date;
 }
