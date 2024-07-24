@@ -1,29 +1,42 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import * as path from 'path'; // Garanta que está importando o módulo 'path'
+import * as path from 'path';
+import { ConfigService } from '@nestjs/config';
 
-export const databaseConfig: TypeOrmModuleOptions = {
-  type: 'postgres',
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT, 10),
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  entities: [
-    path.join(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      'src',
-      'modules',
-      '**',
-      '*.entity.{ts,js}',
-    ),
-  ],
-  migrations: [path.join(__dirname, '..', 'migrations', '*.{ts,js}')],
-  synchronize: false, // Lembre-se, isso deve ser 'false' em produção!
+export const databaseConfig = (): TypeOrmModuleOptions => {
+  const configService = new ConfigService();
+  const isProduction = configService.get<string>('NODE_ENV') === 'production';
+
+  return {
+    type: isProduction ? 'postgres' : 'sqlite',
+    host: isProduction ? configService.get<string>('DB_HOST') : undefined,
+    port: isProduction
+      ? parseInt(configService.get<string>('DB_PORT'), 10)
+      : undefined,
+    username: isProduction
+      ? configService.get<string>('DB_USERNAME')
+      : undefined,
+    password: isProduction
+      ? configService.get<string>('DB_PASSWORD')
+      : undefined,
+    database: isProduction
+      ? configService.get<string>('DB_DATABASE')
+      : 'dev.sqlite',
+    entities: [
+      path.join(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        'src',
+        'modules',
+        '**',
+        '*.entity.{ts,js}',
+      ),
+    ],
+    migrations: [path.join(__dirname, '..', 'migrations', '*.{ts,js}')],
+    synchronize: !isProduction, // Apenas para desenvolvimento
+    logging: !isProduction,
+  };
 };
-
-console.log(__dirname, '..', 'migrations', '*.{ts,js}');
 
 export default databaseConfig;

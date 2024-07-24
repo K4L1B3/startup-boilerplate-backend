@@ -3,7 +3,7 @@ import {
   Column,
   Entity,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../../user/entity/user.entity';
@@ -23,7 +23,7 @@ export class CodePass {
   userId: number;
 
   //FK - User
-  @OneToOne(() => User)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
 
@@ -35,11 +35,16 @@ export class CodePass {
 
   @IsNotEmpty()
   @IsDefined()
-  @Column({ type: 'timestamp' })
+  @Column({
+    type: process.env.NODE_ENV === 'production' ? 'timestamp' : 'datetime',
+  })
   expirationDate: Date;
 
   @IsNotEmpty()
   @IsDefined()
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: process.env.NODE_ENV === 'production' ? 'timestamp' : 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 }

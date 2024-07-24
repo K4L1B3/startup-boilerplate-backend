@@ -70,7 +70,8 @@ export class User {
     description: 'Localização do usuário',
   })
   @IsString()
-  @Column()
+  @IsOptional()
+  @Column({ nullable: true }) // Mudança aqui para permitir NULL
   location?: string;
 
   @ApiProperty({
@@ -80,8 +81,8 @@ export class User {
   })
   @IsEnum(UserRole)
   @Column({
-    type: 'enum',
-    enum: UserRole,
+    type: process.env.NODE_ENV === 'production' ? 'enum' : 'varchar',
+    enum: process.env.NODE_ENV === 'production' ? UserRole : undefined,
     default: UserRole.User,
   })
   role: UserRole;
@@ -93,8 +94,8 @@ export class User {
   })
   @IsEnum(UserPlan)
   @Column({
-    type: 'enum',
-    enum: UserPlan,
+    type: process.env.NODE_ENV === 'production' ? 'enum' : 'varchar',
+    enum: process.env.NODE_ENV === 'production' ? UserPlan : undefined,
     default: UserPlan.Trial,
   })
   plan: UserPlan;
@@ -126,6 +127,6 @@ export class User {
   })
   @IsString()
   @IsNotEmpty()
-  @Column({ default: 'direct' || 'google' })
+  @Column({ default: 'direct' })
   authType: string;
 }

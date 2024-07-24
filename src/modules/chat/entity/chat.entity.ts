@@ -6,7 +6,14 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { User } from '../../user/entity/user.entity';
 
 @Entity('Chat')
 export class Chat {
@@ -44,7 +51,7 @@ export class Chat {
     example: 'Histórico de mensagens do chat...',
     description: 'Histórico de mensagens do chat',
   })
-  @Column()
+  @Column('text')
   @IsString()
   @IsNotEmpty()
   @IsDefined()
@@ -56,7 +63,7 @@ export class Chat {
   })
   @Column({
     name: 'chatStart',
-    type: 'timestamp',
+    type: process.env.NODE_ENV === 'production' ? 'timestamp' : 'datetime',
     default: () => 'CURRENT_TIMESTAMP',
   })
   @IsDate()
@@ -70,7 +77,7 @@ export class Chat {
   })
   @Column({
     name: 'chatEnd',
-    type: 'timestamp',
+    type: process.env.NODE_ENV === 'production' ? 'timestamp' : 'datetime',
     default: () => 'CURRENT_TIMESTAMP',
   })
   @IsDate()
@@ -79,12 +86,16 @@ export class Chat {
   chatEnd: Date;
 
   @ApiProperty({
-    example:
-      'Os Estados Unidos ganhou do Japão na Segunda Guerra Mundial, que ocorreu de 1939 a 1945.',
-    description: 'Resposta mais recente do chat',
+    example: 'AI: Esta é a última resposta.',
+    description: 'Última resposta do chat',
   })
-  @Column()
+  @Column('text')
   @IsString()
   @IsNotEmpty()
+  @IsDefined()
   newAnswer: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 }

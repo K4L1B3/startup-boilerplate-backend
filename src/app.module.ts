@@ -6,7 +6,7 @@ import * as path from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { HttpModule } from './config/axios/http.module';
-import databaseConfig from './config/database/database.config';
+import { databaseConfig } from './config/database/database.config';
 import { jwtConfig } from './config/security/jwt.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
@@ -28,12 +28,10 @@ const isProduction = process.env.NODE_ENV === 'production';
         filePattern: '*.json',
         watch: true,
       },
-      resolvers: [
-        { use: AcceptLanguageResolver, options: ['en', 'pt-BR'] }, // Lista de idiomas suportados
-      ],
+      resolvers: [{ use: AcceptLanguageResolver, options: ['en', 'pt-BR'] }],
     }),
     TypeOrmModule.forRoot({
-      ...databaseConfig,
+      ...databaseConfig(),
       entities: [
         path.join(
           __dirname,
