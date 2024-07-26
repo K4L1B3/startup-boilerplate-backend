@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ChatModule } from './modules/chat/chat.module';
+import { StripeModule } from './modules/stripe/stripe.module';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -19,7 +20,7 @@ const isProduction = process.env.NODE_ENV === 'production';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: './.env',
+      envFilePath: path.resolve(__dirname, '../.env'),
     }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
@@ -45,6 +46,7 @@ const isProduction = process.env.NODE_ENV === 'production';
     AuthModule,
     MailerModule,
     ChatModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [],

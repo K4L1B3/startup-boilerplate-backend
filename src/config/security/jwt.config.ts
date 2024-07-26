@@ -1,4 +1,4 @@
-//  src/config/jwt.config
+// src/config/security/jwt.config.ts
 import { JwtModuleOptions } from '@nestjs/jwt';
 
 export const jwtConfig: JwtModuleOptions = {

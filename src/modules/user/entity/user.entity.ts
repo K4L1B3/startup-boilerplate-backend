@@ -15,9 +15,9 @@ export enum UserRole {
 }
 
 export enum UserPlan {
-  Trial = 'Trial',
-  Basic = 'Basic',
-  Premium = 'Premium',
+  Basic = 'Yellow',
+  Premium = 'HeartGold',
+  Enterprise = 'Emerald',
 }
 
 @Entity('Users')
@@ -71,7 +71,7 @@ export class User {
   })
   @IsString()
   @IsOptional()
-  @Column({ nullable: true }) // Mudança aqui para permitir NULL
+  @Column({ nullable: true })
   location?: string;
 
   @ApiProperty({
@@ -88,7 +88,7 @@ export class User {
   role: UserRole;
 
   @ApiProperty({
-    example: UserPlan.Trial,
+    example: UserPlan.Basic,
     description: 'Plano do usuário',
     enum: UserPlan,
   })
@@ -96,7 +96,7 @@ export class User {
   @Column({
     type: process.env.NODE_ENV === 'production' ? 'enum' : 'varchar',
     enum: process.env.NODE_ENV === 'production' ? UserPlan : undefined,
-    default: UserPlan.Trial,
+    default: UserPlan.Basic,
   })
   plan: UserPlan;
 
@@ -129,4 +129,19 @@ export class User {
   @IsNotEmpty()
   @Column({ default: 'direct' })
   authType: string;
+
+  @ApiProperty({
+    example: 'cus_J1a2b3c4d5e6f7g8h9',
+    description: 'Stripe Customer ID',
+  })
+  @IsString()
+  @IsOptional()
+  @Column({ nullable: true })
+  stripeCustomerId?: string;
+
+  @ApiProperty({ example: 'active', description: 'Subscription status' })
+  @IsString()
+  @IsOptional()
+  @Column({ nullable: true })
+  subscriptionStatus?: string;
 }

@@ -49,19 +49,22 @@ CREATE TYPE "user_plan" AS ENUM (
   'Trial'
 );
 
-CREATE TABLE "Users" (
-  "id" SERIAL PRIMARY KEY NOT NULL,
-  "name" varchar NOT NULL,
-  "email" varchar NOT NULL,
-  "phone" varchar(15) NULL,
-  "password" varchar,
-  "location" varchar,
-  "profilePicture" varchar DEFAULT 'assets/ProfilePictureDefault/profile.png',
-  "googleId" varchar,
-  "authType" varchar NOT NULL DEFAULT 'direct',
-  "role" user_role NOT NULL DEFAULT 'User',
-  "plan" user_plan NOT NULL DEFAULT 'Plan1'
+CREATE TABLE Users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  phone VARCHAR(255) NOT NULL,
+  password VARCHAR(255),
+  location VARCHAR(255),
+  role user_role DEFAULT 'User',
+  plan user_plan DEFAULT 'Trial',
+  profilePicture VARCHAR(255) DEFAULT 'assets/ProfilePictureDefault/profile.png',
+  googleId VARCHAR(255),
+  authType VARCHAR(255) NOT NULL DEFAULT 'direct',
+  stripeCustomerId VARCHAR(255),
+  subscriptionStatus VARCHAR(255)
 );
+
 
 CREATE TABLE "CodePass" (
   "id" SERIAL PRIMARY KEY NOT NULL,

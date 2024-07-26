@@ -6,6 +6,6 @@ import { ApiExcludeEndpoint } from '@nestjs/swagger';
 export class AppController {
   @Get()
   @ApiExcludeEndpoint()
-  @Redirect('/api', 302)
+  @Redirect('/swagger', 302)
   redirectToApi() {}
 }

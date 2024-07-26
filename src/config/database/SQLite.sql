@@ -1,22 +1,24 @@
 -- SQLite
-DROP TABLE USER;
+DROP TABLE Users;
 
 DROP TABLE Chat;
 
-CREATE TABLE
-    Users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        name VARCHAR NOT NULL,
-        email VARCHAR NOT NULL,
-        phone VARCHAR(15),
-        user_role VARCHAR(10) NOT NULL CHECK (user_role IN ('User', 'Admin', 'Superuser')),
-        user_plan VARCHAR(10) NOT NULL CHECK (user_plan IN ('Trial', 'Basic', 'Premium')),
-        password VARCHAR,
-        location VARCHAR,
-        profilePicture VARCHAR DEFAULT 'assets/ProfilePictureDefault/profile.png',
-        googleId VARCHAR,
-        authType VARCHAR NOT NULL DEFAULT 'direct'
-    );
+CREATE TABLE Users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  phone TEXT NOT NULL,
+  password TEXT,
+  location TEXT,
+  role TEXT DEFAULT 'User' CHECK(role IN ('User', 'Admin', 'Superuser')),
+  plan TEXT DEFAULT 'Trial' CHECK(plan IN ('Trial', 'Basic', 'Premium')),
+  profilePicture TEXT DEFAULT 'assets/ProfilePictureDefault/profile.png',
+  googleId TEXT,
+  authType TEXT NOT NULL DEFAULT 'direct',
+  stripeCustomerId TEXT,
+  subscriptionStatus TEXT
+);
+
 
 CREATE TABLE
     CodePass (
