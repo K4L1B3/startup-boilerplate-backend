@@ -5,4 +5,5 @@ export interface RequestWithUser extends Request {
     userId: number;
     username: string;
   };
+  logout(): void;
 }

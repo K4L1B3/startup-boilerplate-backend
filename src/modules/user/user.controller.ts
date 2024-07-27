@@ -7,6 +7,8 @@ import {
   Param,
   Post,
   Put,
+  Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -20,21 +22,20 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../config/security/guards/jwt-auth.guard';
 import { userDto } from './dto/user.dto';
-import { User } from './entity/user.entity';
+import { User, UserRole } from './entity/user.entity';
 import { UserService } from './user.service';
-
-// import { I18nService } from "nestjs-i18n";
+import { Roles } from 'src/config/decorators/roles.decorator';
+import { Response } from 'express';
+import { RequestWithUser } from 'src/config/common/interfaces/request-with-user.interface';
 
 @ApiBearerAuth('access-token')
 @ApiTags('User')
 @Controller('user')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    // private readonly i18n: I18nService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.Admin)
   @Get('getUsers')
   @ApiOperation({ summary: 'Retrieve all users' })
   @ApiResponse({
@@ -79,6 +80,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.Admin)
   @Get('getUserByEmail/:email')
   @ApiOperation({ summary: 'Find a user by email' })
   @ApiResponse({ status: 200, description: 'Sucess', type: [User] })
@@ -92,6 +94,7 @@ export class UserController {
   }
 
   @Post('createUser')
+  @Roles(UserRole.Admin)
   @ApiOperation({ summary: 'create an user' })
   @ApiResponse({ status: 201, description: 'Sucess', type: [User] })
   @ApiBody({ description: 'User Data', type: [userDto] })
@@ -101,6 +104,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.Admin)
   @Put('updateUser/:id')
   @ApiOperation({ summary: 'update an user' })
   @ApiResponse({ status: 200, description: 'Sucess', type: [User] })
@@ -118,6 +122,17 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Put('updateUserSelf')
+  @ApiOperation({ summary: 'Update own account' })
+  @ApiResponse({ status: 200, description: 'Account updated successfully' })
+  @ApiBody({ description: 'User Data', type: userDto })
+  async updateUserSelf(@Req() req: RequestWithUser, @Body() userData: userDto) {
+    const userId = req.user.userId;
+    return this.userService.updateUserSelf(userId, userData);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.Admin)
   @Delete('deleteUser/:id')
   @ApiOperation({ summary: 'Delete an user' })
   @ApiResponse({ status: 204, description: 'user deleted' })
@@ -128,5 +143,17 @@ export class UserController {
   })
   async deleteUser(@Param('id') userId: number): Promise<void> {
     await this.userService.deleteUser(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('deleteSelf')
+  @ApiOperation({ summary: 'Delete own account' })
+  @ApiResponse({ status: 204, description: 'Account deleted' })
+  async deleteSelf(
+    @Req() req: RequestWithUser,
+    @Res() res: Response,
+  ): Promise<void> {
+    await this.userService.deleteUserSelf(req.user.userId);
+    res.status(204).send();
   }
 }

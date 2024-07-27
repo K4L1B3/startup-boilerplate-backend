@@ -11,7 +11,6 @@ import {
 export enum UserRole {
   User = 'User',
   Admin = 'Admin',
-  Superuser = 'Superuser',
 }
 
 export enum UserPlan {

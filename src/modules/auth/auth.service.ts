@@ -1,19 +1,15 @@
-import {
-  Injectable,
-  NotFoundException,
-  // NotFoundException
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { EmailDto } from './dto/email.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
-import { AuthenticatedRequest } from '../user/repository/authenticated-request';
+import { AuthenticatedRequest } from '../user/interfaces/authenticated-request';
 import { EmailMailerService } from '../../config/mail/mailer.service';
 import { CodePassService } from './codePass.service';
 import { verificationCodeDto } from './dto/VerificationCode.dto';
-
+import { RequestWithUser } from '../../config/common/interfaces/request-with-user.interface';
 @Injectable()
 export class AuthService {
   constructor(
@@ -172,5 +168,10 @@ export class AuthService {
       console.error('Erro ao atualizar a senha:', error.message);
       throw new Error('Token inválido ou expirado.');
     }
+  }
+
+  async logout(req: RequestWithUser) {
+    req.logout();
+    return { message: 'Logged out successfully' };
   }
 }

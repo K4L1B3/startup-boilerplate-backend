@@ -6,6 +6,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
+import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -39,6 +40,9 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Use ValidationPipe globally
+  app.useGlobalPipes(new ValidationPipe());
 
   await app.listen(process.env.RUN_PORT);
 }

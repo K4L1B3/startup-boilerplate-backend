@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
@@ -13,6 +13,9 @@ import { UserModule } from './modules/user/user.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ChatModule } from './modules/chat/chat.module';
 import { StripeModule } from './modules/stripe/stripe.module';
+import { AuthMiddleware } from './modules/auth/auth.middleware';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './config/security/guards/roles.guard';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -49,6 +52,28 @@ const isProduction = process.env.NODE_ENV === 'production';
     StripeModule,
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware)
+      .exclude(
+        { path: 'auth/login', method: RequestMethod.ALL },
+        { path: 'auth/register', method: RequestMethod.ALL },
+        { path: 'auth/requestPassByEmail', method: RequestMethod.ALL },
+        { path: '/auth/google/callback', method: RequestMethod.ALL },
+        { path: '/auth/google', method: RequestMethod.ALL },
+        { path: 'auth/verify-code', method: RequestMethod.ALL },
+        { path: 'stripe/create-checkout-session', method: RequestMethod.ALL },
+        { path: 'stripe/create-customer', method: RequestMethod.ALL },
+        { path: 'stripe/webhook', method: RequestMethod.ALL },
+      )
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

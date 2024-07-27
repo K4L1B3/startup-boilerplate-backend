@@ -1,11 +1,11 @@
 // src/services/user.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { externalAuthDto } from '../auth/dto/external-auth.dto';
 import { userDto } from './dto/user.dto';
-import { User } from './entity/user.entity';
+import { User, UserRole } from './entity/user.entity';
 import { EmailDto } from '../auth/dto/email.dto';
 
 @Injectable()
@@ -36,7 +36,10 @@ export class UserService {
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
-    const newUser = this.userRepository.create(userData);
+    const newUser = this.userRepository.create({
+      ...userData,
+      role: UserRole.User,
+    });
     return await this.userRepository.save(newUser);
   }
 
@@ -65,7 +68,31 @@ export class UserService {
     return this.userRepository.findOneBy({ id: userId });
   }
 
+  async updateUserSelf(userId: number, userData: userDto): Promise<User> {
+    const user = await this.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (userData.password) {
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(userData.password, salt);
+      userData.password = hashedPassword;
+    }
+
+    await this.userRepository.update(userId, userData);
+    return this.userRepository.findOneBy({ id: userId });
+  }
+
   async deleteUser(userId: number) {
     return await this.userRepository.delete(userId);
+  }
+
+  async deleteUserSelf(userId: number) {
+    const user = await this.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    await this.userRepository.remove(user);
   }
 }

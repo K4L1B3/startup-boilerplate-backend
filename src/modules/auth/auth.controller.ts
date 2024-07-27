@@ -22,8 +22,9 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { EmailDto } from './dto/email.dto';
 import { verificationCodeDto } from './dto/VerificationCode.dto';
 import { ResetPassDto } from './dto/resetPass.dto';
-import { AuthenticatedRequest } from '../user/repository/authenticated-request';
+import { AuthenticatedRequest } from '../user/interfaces/authenticated-request';
 import { Request, Response } from 'express';
+import { RequestWithUser } from 'src/config/common/interfaces/request-with-user.interface';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -130,5 +131,11 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req: AuthenticatedRequest) {
     return this.authService.googleLogin(req);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('logout')
+  async logout(@Req() req: RequestWithUser) {
+    return this.authService.logout(req);
   }
 }
