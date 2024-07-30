@@ -16,7 +16,7 @@ export enum UserRole {
 export enum UserPlan {
   Basic = 'Yellow',
   Premium = 'HeartGold',
-  Enterprise = 'Emerald',
+  Year = 'Emerald',
 }
 
 @Entity('Users')

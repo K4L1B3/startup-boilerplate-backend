@@ -5,9 +5,10 @@ import { StripeService } from './stripe.service';
 import { StripeController } from './stripe.controller';
 import { User } from '../user/entity/user.entity';
 import { json } from 'express';
+import { EmailMailerModule } from 'src/config/mail/mailer.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), ConfigModule],
+  imports: [TypeOrmModule.forFeature([User]), ConfigModule, EmailMailerModule],
   providers: [StripeService],
   controllers: [StripeController],
 })

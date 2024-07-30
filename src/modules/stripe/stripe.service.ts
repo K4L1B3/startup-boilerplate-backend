@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import Stripe from 'stripe';
 import { Repository } from 'typeorm';
-import { User } from '../user/entity/user.entity'; // Ajuste para seu caminho correto
+import { User, UserPlan } from '../user/entity/user.entity'; // Ajuste para seu caminho correto
+import { EmailMailerService } from 'src/config/mail/mailer.service';
 
 @Injectable()
 export class StripeService {
@@ -11,6 +12,7 @@ export class StripeService {
 
   constructor(
     private configService: ConfigService,
+    private readonly mailerService: EmailMailerService,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {
@@ -87,6 +89,18 @@ export class StripeService {
         console.log('Payment received!');
         break;
       case 'customer.subscription.deleted':
+        await this.handlePaymentIntentSucceeded(
+          event.data.object as Stripe.PaymentIntent,
+        );
+        console.log('Subscription Canceled!');
+        break;
+      case 'customer.subscription.updated':
+        await this.handleSubscriptionUpdated(
+          event.data.object as Stripe.Subscription,
+        );
+        console.log('Subscription Canceled!');
+        break;
+      case 'customer.subscription.deleted':
         await this.handleCustomerSubscriptionDeleted(
           event.data.object as Stripe.Subscription,
         );
@@ -100,13 +114,12 @@ export class StripeService {
   }
 
   async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    console.log('Entrei na função de handleCheckout');
     const customerId = session.customer as string;
     const user = await this.usersRepository.findOne({
       where: { stripeCustomerId: customerId },
     });
 
-    // Future Feature: >>>>> send email to dashboard <<<<
+    this.mailerService.sendWelcomeEmail(user.email);
 
     if (user) {
       user.subscriptionStatus = 'active';
@@ -115,16 +128,42 @@ export class StripeService {
   }
 
   async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-    console.log('Entrei na função de handlepayment');
     const customerId = paymentIntent.customer as string;
     const user = await this.usersRepository.findOne({
       where: { stripeCustomerId: customerId },
     });
 
-    // Future Feature: >>>>> send email to dashboard <<<<
+    this.mailerService.sendWelcomeEmail(user.email);
 
     if (user) {
       user.subscriptionStatus = 'active';
+      await this.usersRepository.save(user);
+    }
+  }
+
+  async handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+    const customerId = subscription.customer as string;
+    const user = await this.usersRepository.findOne({
+      where: { stripeCustomerId: customerId },
+    });
+
+    if (user) {
+      const planId = subscription.items.data[0].plan.id;
+
+      switch (planId) {
+        case 'price_1PgDQ4RsfIl9COKnX0NmyBQP':
+          user.plan = UserPlan.Basic;
+          break;
+        case 'price_1PgDQPRsfIl9COKn7yqjuIB4':
+          user.plan = UserPlan.Premium;
+          break;
+        case 'price_1PgDQkRsfIl9COKn5bElCidh':
+          user.plan = UserPlan.Year;
+          break;
+        default:
+          user.plan = UserPlan.Basic;
+      }
+
       await this.usersRepository.save(user);
     }
   }

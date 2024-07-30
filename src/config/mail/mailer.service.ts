@@ -10,7 +10,7 @@ export class EmailMailerService {
     to: string,
     subject: string,
     template: string,
-    context: object,
+    context?: object,
   ): Promise<void> {
     const templatePath = join(__dirname, template);
     console.log(`Sending email to ${to} using template ${templatePath}`);
@@ -22,9 +22,16 @@ export class EmailMailerService {
     });
   }
 
+  async sendWelcomeEmail(to: string) {
+    const subject = 'PandoraChat: Bem vindo ao PandoraChat';
+    const template = '../../../assets/Templates/WelcomeEmail.html';
+
+    await this.sendEmail(to, subject, template);
+  }
+
   async sendVerifyEmail(to: string, code: string) {
     const subject = 'PandoraChat: Verifique o seu e-mail';
-    const template = '../../../assets/Templates/email.html';
+    const template = '../../../assets/Templates/VerifyEmail.html';
     const context = { code };
 
     await this.sendEmail(to, subject, template, context);
