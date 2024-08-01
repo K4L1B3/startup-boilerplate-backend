@@ -5,7 +5,6 @@ import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 import * as path from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
-import { HttpModule } from './config/axios/http.module';
 import { databaseConfig } from './config/database/database.config';
 import { jwtConfig } from './config/security/jwt.config';
 import { AuthModule } from './modules/auth/auth.module';
@@ -16,6 +15,7 @@ import { StripeModule } from './modules/stripe/stripe.module';
 import { AuthMiddleware } from './modules/auth/auth.middleware';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './config/security/guards/roles.guard';
+import { winstonConfig } from './config/logs/logger';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -44,12 +44,12 @@ const isProduction = process.env.NODE_ENV === 'production';
       ],
     }),
     JwtModule.register(jwtConfig),
-    HttpModule.forRoot(),
     UserModule,
     AuthModule,
     MailerModule,
     ChatModule,
     StripeModule,
+    winstonConfig,
   ],
   controllers: [AppController],
   providers: [
