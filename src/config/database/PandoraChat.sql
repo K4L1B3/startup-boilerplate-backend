@@ -1,10 +1,11 @@
--- SQLite
+-- Postgres
 
 CREATE database sparta;
 
-DROP TABLE IF EXISTS Companies;
+DROP TABLE IF EXISTS "Users";
+DROP TABLE IF EXISTS "CodePass";
 
-CREATE TABLE companies (
+CREATE TABLE "Companies" (
     id serial PRIMARY KEY NOT NULL,
     cnpj_cia VARCHAR(20),
     denom_social VARCHAR(100),
@@ -21,6 +22,7 @@ SELECT * from Companies;
 
 
 DROP TABLE "Users";
+DROP TABLE "users";
 DROP TABLE "Chat";
 DROP TABLE "CodePass";
 DROP TYPE "user_role";
@@ -44,12 +46,16 @@ CREATE TYPE "user_role" AS ENUM (
 );
 
 CREATE TYPE "user_plan" AS ENUM (
-  'Plan1',
-  'Plan2',
-  'Trial'
+    'Yellow', 
+    'HeartGold',
+    'Emerald'
 );
 
-CREATE TABLE Users (
+DROP TYPE user_plan CASCADE;
+
+
+
+CREATE TABLE "Users" (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
