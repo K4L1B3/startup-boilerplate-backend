@@ -1,4 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -6,6 +11,7 @@ import {
   IsOptional,
   IsString,
   IsEnum,
+  IsDate,
 } from 'class-validator';
 
 export enum UserRole {
@@ -143,4 +149,12 @@ export class User {
   @IsOptional()
   @Column({ nullable: true })
   subscriptionStatus?: string;
+
+  @ApiProperty({
+    example: new Date().toISOString(),
+    description: 'Data de criação do usuário',
+  })
+  @IsDate()
+  @CreateDateColumn()
+  createdAt: Date;
 }

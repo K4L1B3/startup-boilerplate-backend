@@ -46,4 +46,9 @@ export class userDto {
   @IsString()
   @IsOptional()
   profilePicture?: string;
+
+  @ApiProperty({ example: 'active', description: 'Subscription status' })
+  @IsString()
+  @IsOptional()
+  subscriptionStatus?: string;
 }

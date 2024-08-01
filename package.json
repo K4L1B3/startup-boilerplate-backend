@@ -41,6 +41,7 @@
     "i18n": "^0.15.1",
     "nest-winston": "^1.9.4",
     "nestjs-i18n": "^10.4.5",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
     "openai": "^4.52.0",
     "passport": "^0.7.0",

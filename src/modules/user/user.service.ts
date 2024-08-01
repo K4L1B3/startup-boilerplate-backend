@@ -1,19 +1,48 @@
 // src/services/user.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { externalAuthDto } from '../auth/dto/external-auth.dto';
 import { userDto } from './dto/user.dto';
 import { User, UserRole } from './entity/user.entity';
 import { EmailDto } from '../auth/dto/email.dto';
+import { StripeService } from '../stripe/stripe.service';
+import * as cron from 'node-cron';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  ) {}
+    private stripeService: StripeService,
+  ) {
+    this.schedulePendingUserCleanup();
+  }
+
+  private schedulePendingUserCleanup() {
+    cron.schedule('*/20 * * * *', async () => {
+      // Para teste de 1 minuto
+      // cron.schedule('* * * * *', async () => {
+      const now = new Date();
+      now.setHours(now.getMinutes() - 20);
+      // Para teste
+      // now.setMinutes(now.getMinutes() - 1);
+      const pendingUsers = await this.userRepository.find({
+        where: {
+          subscriptionStatus: 'pending',
+          createdAt: LessThan(now),
+        },
+      });
+
+      for (const user of pendingUsers) {
+        if (user.stripeCustomerId) {
+          await this.stripeService.deleteCustomer(user.stripeCustomerId);
+        }
+        await this.userRepository.remove(user);
+      }
+    });
+  }
 
   async findAllUsers(): Promise<User[]> {
     return await this.userRepository.find();

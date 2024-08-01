@@ -11,6 +11,7 @@ import { EmailMailerModule } from 'src/config/mail/mailer.module';
   imports: [TypeOrmModule.forFeature([User]), ConfigModule, EmailMailerModule],
   providers: [StripeService],
   controllers: [StripeController],
+  exports: [StripeService],
 })
 export class StripeModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

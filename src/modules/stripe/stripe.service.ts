@@ -82,13 +82,17 @@ export class StripeService {
     }
 
     switch (event.type) {
+      case 'customer.created':
+        await this.handleCustomerCreated(event.data.object as Stripe.Customer);
+        console.log('customer created!');
+        break;
       case 'checkout.session.completed':
         await this.handleCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session,
         );
         console.log('Payment received!');
         break;
-      case 'customer.subscription.deleted':
+      case 'payment_intent.succeeded':
         await this.handlePaymentIntentSucceeded(
           event.data.object as Stripe.PaymentIntent,
         );
@@ -98,7 +102,7 @@ export class StripeService {
         await this.handleSubscriptionUpdated(
           event.data.object as Stripe.Subscription,
         );
-        console.log('Subscription Canceled!');
+        console.log('Subscription Updated!');
         break;
       case 'customer.subscription.deleted':
         await this.handleCustomerSubscriptionDeleted(
@@ -111,6 +115,18 @@ export class StripeService {
     }
 
     return event;
+  }
+
+  async handleCustomerCreated(customer: Stripe.Customer) {
+    const customerId = customer.id;
+    const user = await this.usersRepository.findOne({
+      where: { stripeCustomerId: customerId },
+    });
+
+    if (user) {
+      user.subscriptionStatus = 'pending';
+      await this.usersRepository.save(user);
+    }
   }
 
   async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
@@ -179,5 +195,9 @@ export class StripeService {
       user.subscriptionStatus = 'inactive';
       await this.usersRepository.save(user);
     }
+  }
+
+  async deleteCustomer(customerId: string) {
+    await this.stripe.customers.del(customerId);
   }
 }

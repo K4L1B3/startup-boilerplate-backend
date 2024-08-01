@@ -56,15 +56,15 @@ CREATE TABLE Users (
   phone VARCHAR(255) NOT NULL,
   password VARCHAR(255),
   location VARCHAR(255),
-  role user_role DEFAULT 'User',
-  plan user_plan DEFAULT 'Trial',
+  role VARCHAR(50) DEFAULT 'User' CHECK (role IN ('User', 'Admin')),
+  plan VARCHAR(50) DEFAULT 'Basic' CHECK (plan IN ('Yellow', 'HeartGold', 'Emerald')),
   profilePicture VARCHAR(255) DEFAULT 'assets/ProfilePictureDefault/profile.png',
   googleId VARCHAR(255),
-  authType VARCHAR(255) NOT NULL DEFAULT 'direct',
+  authType VARCHAR(50) NOT NULL DEFAULT 'direct',
   stripeCustomerId VARCHAR(255),
-  subscriptionStatus VARCHAR(255)
+  subscriptionStatus VARCHAR(255),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 
 CREATE TABLE "CodePass" (
   "id" SERIAL PRIMARY KEY NOT NULL,
