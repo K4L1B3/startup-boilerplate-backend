@@ -6,11 +6,14 @@ import {
   Res,
   RawBodyRequest,
   Headers,
+  Inject,
+  LoggerService,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { StripeService } from './stripe.service';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @ApiTags('Stripe')
 @Controller('stripe')
@@ -18,6 +21,8 @@ export class StripeController {
   constructor(
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
 
   @Post('create-customer')
@@ -47,6 +52,7 @@ export class StripeController {
   async createCustomer(
     @Body() createCustomerDto: { email: string; name: string; userId: number },
   ) {
+    this.logger.log(`Creating customer for email: ${createCustomerDto.email}`);
     const customer = await this.stripeService.createCustomer(
       createCustomerDto.email,
       createCustomerDto.name,
@@ -55,6 +61,7 @@ export class StripeController {
       createCustomerDto.userId,
       customer.id,
     );
+    this.logger.log(`Customer created with ID: ${customer.id}`);
     return customer;
   }
 
@@ -94,11 +101,16 @@ export class StripeController {
   async createCheckoutSession(
     @Body() createCheckoutSessionDto: { customerId: string; priceId: string },
   ) {
-    return this.stripeService.createCheckoutSession(
+    this.logger.log(
+      `Creating checkout session for customer: ${createCheckoutSessionDto.customerId}`,
+    );
+    const session = await this.stripeService.createCheckoutSession(
       createCheckoutSessionDto.customerId,
       createCheckoutSessionDto.priceId,
       ['card'],
     );
+    this.logger.log(`Checkout session created with ID: ${session.id}`);
+    return session;
   }
 
   @Post('webhook')
@@ -113,10 +125,12 @@ export class StripeController {
     @Headers('stripe-signature') signature: string,
   ) {
     try {
+      this.logger.log('Handling Stripe webhook');
       await this.stripeService.handleWebhook(signature, req.rawBody);
+      this.logger.log('Webhook handled successfully');
       res.status(200).send();
     } catch (err) {
-      console.error(err.message);
+      this.logger.error(`Webhook handling failed: ${err.message}`);
       res.status(400).send(`Webhook Error: ${err.message}`);
     }
   }

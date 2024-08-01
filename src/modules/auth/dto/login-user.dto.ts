@@ -28,4 +28,5 @@ export class LoginUserDto {
   @IsDefined()
   @Validate(IsStrongPasswordConstraint)
   password: string;
+  email: any;
 }

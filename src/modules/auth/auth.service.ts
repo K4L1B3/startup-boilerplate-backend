@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  LoggerService,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
@@ -10,6 +15,8 @@ import { EmailMailerService } from '../../config/mail/mailer.service';
 import { CodePassService } from './codePass.service';
 import { verificationCodeDto } from './dto/VerificationCode.dto';
 import { RequestWithUser } from '../../config/common/interfaces/request-with-user.interface';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -17,14 +24,18 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailerService: EmailMailerService,
     private readonly codePassService: CodePassService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
 
   async login(loginUserDto: LoginUserDto) {
+    this.logger.log(`Login attempt for user: ${loginUserDto.username}`);
     const user = await this.validateUser(
       loginUserDto.username,
       loginUserDto.password,
     );
     if (!user) {
+      this.logger.error('Invalid username or password');
       throw new Error('Invalid username or password');
     }
     const payload = { username: user.username, sub: user.id };
@@ -36,19 +47,23 @@ export class AuthService {
   async validateUser(username: string, passwordInput: string): Promise<any> {
     const user = await this.userService.getUserByEmail(username);
     if (user && (await bcrypt.compare(passwordInput, user.password))) {
+      this.logger.log(`User validated: ${username}`);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
     }
+    this.logger.warn(`Validation failed for user: ${username}`);
     return null;
   }
 
   async register(registerUserDto: RegisterUserDto) {
+    this.logger.log(`Registration attempt for user: ${registerUserDto.email}`);
     const verifyEmail = await this.userService.getUserByEmail(
       registerUserDto.email,
     );
 
     if (verifyEmail) {
+      this.logger.error('Email already exists');
       throw new Error('Email already exists');
     }
 
@@ -64,7 +79,8 @@ export class AuthService {
   async googleLogin(req: AuthenticatedRequest) {
     const userFromGoogle = req.user;
     if (!userFromGoogle) {
-      throw new Error('No user from google!');
+      this.logger.error('No user from Google');
+      throw new Error('No user from Google');
     }
 
     const { name, email, profilePicture, googleId, authType } = userFromGoogle;
@@ -73,6 +89,9 @@ export class AuthService {
 
     if (user) {
       if (user.authType !== 'google') {
+        this.logger.error(
+          'User with this email already exists and is linked to another account type',
+        );
         throw new Error(
           'User with this email already exists and is linked to another account type',
         );
@@ -97,6 +116,7 @@ export class AuthService {
   }
 
   async requestPass(email: EmailDto) {
+    this.logger.log(`Password reset request for email: ${email.email}`);
     const verifyEmail = await this.userService.getRequestUserByEmail(email);
 
     if (verifyEmail !== null) {
@@ -107,6 +127,7 @@ export class AuthService {
       await this.codePassService.saveCode(verifyEmail.id, verificationCode);
       await this.mailerService.sendVerifyEmail(email.email, verificationCode);
     } else {
+      this.logger.warn('Email not found in the database');
       return {
         success: false,
         message: 'Email não existe na base de dados',
@@ -116,10 +137,11 @@ export class AuthService {
 
   async verificationCode(code: verificationCodeDto) {
     try {
+      this.logger.log(`Verification code attempt for email: ${code.email}`);
       const getUserIdByCode = await this.codePassService.checkUserByCode(code);
 
       if (!getUserIdByCode) {
-        console.log(getUserIdByCode.message);
+        this.logger.error('Invalid verification code');
         return;
       }
 
@@ -131,19 +153,21 @@ export class AuthService {
 
       if (isValidateCode.success) {
         const token = this.jwtService.sign({ userId: getUserIdByCode.userId });
+        this.logger.log('Verification code validated successfully');
         return {
           success: true,
           message: 'Código verificado com sucesso.',
           token,
         };
       } else {
+        this.logger.warn('Verification code validation failed');
         return {
           success: false,
           message: 'Falha na validação do código: Código inválido ou expirado',
         };
       }
     } catch (error) {
-      console.error('Ocorreu um erro durante a verificação do código:', error);
+      this.logger.error(`Error during code verification: ${error.message}`);
       return {
         success: false,
         message: 'Erro ao verificar o código. Tente novamente.',
@@ -155,22 +179,26 @@ export class AuthService {
     try {
       const decoded = this.jwtService.verify(token);
       const userId = decoded.userId;
+      this.logger.log(`Password update attempt for user ID: ${userId}`);
       const user = await this.userService.getUserById(userId);
       if (!user) {
+        this.logger.error('User not found');
         throw new NotFoundException('Usuário não encontrado!');
       }
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(newPassword, salt);
       await this.userService.patchUser(userId, { password: hashedPassword });
 
+      this.logger.log('Password updated successfully');
       return { success: true, message: 'Senha atualizada com sucesso.' };
     } catch (error) {
-      console.error('Erro ao atualizar a senha:', error.message);
+      this.logger.error(`Error updating password: ${error.message}`);
       throw new Error('Token inválido ou expirado.');
     }
   }
 
   async logout(req: RequestWithUser) {
+    this.logger.log(`User logout attempt for user ID: ${req.user.userId}`);
     req.logout();
     return { message: 'Logged out successfully' };
   }

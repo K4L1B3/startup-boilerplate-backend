@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import Stripe from 'stripe';
 import { Repository } from 'typeorm';
 import { User, UserPlan } from '../user/entity/user.entity'; // Ajuste para seu caminho correto
 import { EmailMailerService } from 'src/config/mail/mailer.service';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class StripeService {
@@ -15,6 +16,8 @@ export class StripeService {
     private readonly mailerService: EmailMailerService,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {
     this.stripe = new Stripe(
       this.configService.get<string>('STRIPE_SECRET_KEY'),
@@ -25,6 +28,7 @@ export class StripeService {
   }
 
   async createCustomer(email: string, name: string) {
+    this.logger.log(`Creating customer for email: ${email}`);
     const customer = await this.stripe.customers.create({
       email,
       name,
@@ -38,6 +42,7 @@ export class StripeService {
     priceId: string,
     paymentMethodTypes: 'card'[],
   ) {
+    this.logger.log(`Creating checkout session for customer: ${customerId}`);
     const session = await this.stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: paymentMethodTypes,
@@ -56,8 +61,10 @@ export class StripeService {
   }
 
   async assignCustomerIdToUser(userId: number, customerId: string) {
+    this.logger.log(`Assigning Stripe customer ID to user: ${userId}`);
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
+      this.logger.error(`User with ID ${userId} not found`);
       throw new Error('User not found');
     }
 
@@ -77,41 +84,45 @@ export class StripeService {
         signature,
         webhookSecret,
       );
+      this.logger.log(`Webhook event received: ${event.type}`);
     } catch (err) {
+      this.logger.error(
+        `Webhook signature verification failed: ${err.message}`,
+      );
       throw new Error(`Webhook signature verification failed: ${err.message}`);
     }
 
     switch (event.type) {
       case 'customer.created':
         await this.handleCustomerCreated(event.data.object as Stripe.Customer);
-        console.log('customer created!');
+        this.logger.log('Customer created');
         break;
       case 'checkout.session.completed':
         await this.handleCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session,
         );
-        console.log('Payment received!');
+        this.logger.log('Checkout session completed');
         break;
       case 'payment_intent.succeeded':
         await this.handlePaymentIntentSucceeded(
           event.data.object as Stripe.PaymentIntent,
         );
-        console.log('Subscription Canceled!');
+        this.logger.log('Payment intent succeeded');
         break;
       case 'customer.subscription.updated':
         await this.handleSubscriptionUpdated(
           event.data.object as Stripe.Subscription,
         );
-        console.log('Subscription Updated!');
+        this.logger.log('Subscription updated');
         break;
       case 'customer.subscription.deleted':
         await this.handleCustomerSubscriptionDeleted(
           event.data.object as Stripe.Subscription,
         );
-        console.log('Subscription Canceled!');
+        this.logger.log('Subscription deleted');
         break;
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        this.logger.warn(`Unhandled event type ${event.type}`);
     }
 
     return event;
@@ -119,6 +130,7 @@ export class StripeService {
 
   async handleCustomerCreated(customer: Stripe.Customer) {
     const customerId = customer.id;
+    this.logger.log(`Handling customer created for ID: ${customerId}`);
     const user = await this.usersRepository.findOne({
       where: { stripeCustomerId: customerId },
     });
@@ -131,6 +143,9 @@ export class StripeService {
 
   async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     const customerId = session.customer as string;
+    this.logger.log(
+      `Handling checkout session completed for customer ID: ${customerId}`,
+    );
     const user = await this.usersRepository.findOne({
       where: { stripeCustomerId: customerId },
     });
@@ -145,6 +160,9 @@ export class StripeService {
 
   async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     const customerId = paymentIntent.customer as string;
+    this.logger.log(
+      `Handling payment intent succeeded for customer ID: ${customerId}`,
+    );
     const user = await this.usersRepository.findOne({
       where: { stripeCustomerId: customerId },
     });
@@ -159,6 +177,9 @@ export class StripeService {
 
   async handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     const customerId = subscription.customer as string;
+    this.logger.log(
+      `Handling subscription updated for customer ID: ${customerId}`,
+    );
     const user = await this.usersRepository.findOne({
       where: { stripeCustomerId: customerId },
     });
@@ -185,8 +206,10 @@ export class StripeService {
   }
 
   async handleCustomerSubscriptionDeleted(subscription: Stripe.Subscription) {
-    console.log('Entrei na função de handleSubcriptionDeleted');
     const customerId = subscription.customer as string;
+    this.logger.log(
+      `Handling subscription deleted for customer ID: ${customerId}`,
+    );
     const user = await this.usersRepository.findOne({
       where: { stripeCustomerId: customerId },
     });
@@ -198,6 +221,7 @@ export class StripeService {
   }
 
   async deleteCustomer(customerId: string) {
+    this.logger.log(`Deleting customer with ID: ${customerId}`);
     await this.stripe.customers.del(customerId);
   }
 }

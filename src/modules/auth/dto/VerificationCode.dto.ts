@@ -10,4 +10,5 @@ export class verificationCodeDto {
   @IsNotEmpty()
   @IsDefined()
   code: string;
+  email: any;
 }
