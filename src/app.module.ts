@@ -16,6 +16,7 @@ import { AuthMiddleware } from './modules/auth/auth.middleware';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './config/security/guards/roles.guard';
 import { winstonConfig } from './config/logs/logger';
+import { AxiosModule } from './config/axios/axios.module';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -50,6 +51,7 @@ const isProduction = process.env.NODE_ENV === 'production';
     ChatModule,
     StripeModule,
     winstonConfig,
+    AxiosModule,
   ],
   controllers: [AppController],
   providers: [
