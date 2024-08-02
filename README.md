@@ -14,7 +14,7 @@
  <a href="#funcionalidades">Funcionalidades</a> • 
  <a href="#estrutura-do-projeto">Estrutura do Projeto</a> • 
  <a href="#primeiros-passos">Primeiros Passos</a> •  
- <a href="#docutamentação-da-api">Documentação da API</a> •  
+ <a href="#documentação-da-api">Documentação da API</a> •  
  <a href="#contribuição">Contribuição</a> •
  <a href="#licença">Licença</a> •
  <a href="#contato">Contato</a>
