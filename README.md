@@ -1,14 +1,25 @@
 # 🚀 Projeto Boilerplate para Startups
 
-<div>
-<a href="https://nodejs.org/" target="_blank"><img src="https://img.shields.io/badge/node-v15.17.0-green" alt="Node.js Version" /></a>
-<br/>
-<a href="https://www.npmjs.com/" target="_blank"><img src="https://img.shields.io/badge/npm-v6.14.13-blue" alt="NPM Version" /></a>
-<br/>
-<a href="https://opensource.org/licenses/MIT" target="_blank"><img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="MIT License" /></a>
-<br/> 
+
+<div display="inline" align="center">
+<img src="https://img.shields.io/static/v1?label=Version&message=1.0&color=7159c1&style=for-the-badge&logo=ghost"/>
+<img src="https://img.shields.io/static/v1?label=Progress&message=100%&color=7159c1&style=for-the-badge&logo=ghost"/>
+<img src="https://img.shields.io/static/v1?label=Contribution&message=Closed&color=7159c1&style=for-the-badge&logo=ghost"/>
+<img src="https://img.shields.io/static/v1?label= Project Stats &message=All right&color=00FF55&style=for-the-badge&logo=ghost"/>
 </div>
 
+# Índice
+<p align="center">
+ <a href="#introdução">Introdução</a> •
+ <a href="#funcionalidades">Funcionalidades</a> • 
+ <a href="#estrutura-do-projeto">Estrutura do Projeto</a> • 
+ <a href="#primeiros-passos">Primeiros Passos</a> •  
+ <a href="#docutamentação-da-api">Documentação da API</a> •  
+ <a href="#contribuição">Contribuição</a> •
+ <a href="#licença">Licença</a> •
+ <a href="#contato">Contato</a>
+</p>
+<br/>
 
 ## Introdução
 
