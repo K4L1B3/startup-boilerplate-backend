@@ -1,16 +1,25 @@
 #App
 RUN_PORT=3000
-NODE_ENV=development
+# NODE_ENV=production
+# NODE_ENV=development
 
 #APIs
-API_BASE_URL_CHATGPT=http://api.example.com/users
-API_BASE_URL_WHATSAPP=http://api.example.com/posts
-API_BASE_URL_STRIPE=http://api.example.com/posts
 
+#LLM APIs
+OPENAI_API_KEY=YOUR_API_KEY_HERE
 
-# Google Auth
-GOOGLE_CLIENT_ID=api-key
-GOOGLE_CLIENT_SECRET=api-key
+#Payment Method API
+STRIPE_SECRET_KEY=YOUR_API_KEY_HERE
+
+STRIPE_WEBHOOK_SECRET_KEY=YOUR_API_KEY_HERE
+
+# Para testar o webhook do stripe utilize os seguintes comandos:
+# - stripe login ( para se logar na sua conta do stripe ) 
+# - stripe listen --forward-to localhost:3000/stripe/webhook (Para ativar o webhook)
+# - Lembrando que você precisa ter configurado o seu produto no dashboard do stripe primeiro
+# Após isso você também precisa mudar os price_id que estão dentro do switch da função 
+# handleSubscriptionUpdated isso irá atualizar os tipos de planos de usuário
+
 
 #JWT
 JWT_SECRET=jwt-Key
