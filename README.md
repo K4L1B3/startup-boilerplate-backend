@@ -115,6 +115,8 @@ Por exemplo, o módulo de usuário terá:
 
 ## Primeiros Passos
 
+0. **Adicione todas as suas variáveis de ambiente (recomendo ler o arquivo .envExemple)**
+
 1. **Clone o repositório**:
    ```sh
    git clone https://github.com/your-repo/startup-boilerplate.git
