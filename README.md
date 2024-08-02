@@ -115,7 +115,7 @@ Por exemplo, o módulo de usuário terá:
 
 ## Primeiros Passos
 
-0. **Adicione todas as suas variáveis de ambiente (recomendo ler o arquivo .envExemple)**
+0. **OBS: Adicione todas as suas variáveis de ambiente (recomendo ler o arquivo .envExemple)**
 
 1. **Clone o repositório**:
    ```sh
