@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { StripeService } from './stripe.service';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
 
 @ApiTags('Stripe')
 @Controller('stripe')
@@ -21,8 +21,8 @@ export class StripeController {
   constructor(
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    @Inject('winston') 
+private readonly logger: winston.Logger,
   ) {}
 
   @Post('create-customer')
@@ -52,7 +52,7 @@ export class StripeController {
   async createCustomer(
     @Body() createCustomerDto: { email: string; name: string; userId: number },
   ) {
-    this.logger.log(`Creating customer for email: ${createCustomerDto.email}`);
+    this.logger.info(`Creating customer for email: ${createCustomerDto.email}`);
     const customer = await this.stripeService.createCustomer(
       createCustomerDto.email,
       createCustomerDto.name,
@@ -61,7 +61,7 @@ export class StripeController {
       createCustomerDto.userId,
       customer.id,
     );
-    this.logger.log(`Customer created with ID: ${customer.id}`);
+    this.logger.info(`Customer created with ID: ${customer.id}`);
     return customer;
   }
 
@@ -101,7 +101,7 @@ export class StripeController {
   async createCheckoutSession(
     @Body() createCheckoutSessionDto: { customerId: string; priceId: string },
   ) {
-    this.logger.log(
+    this.logger.info(
       `Creating checkout session for customer: ${createCheckoutSessionDto.customerId}`,
     );
     const session = await this.stripeService.createCheckoutSession(
@@ -109,7 +109,7 @@ export class StripeController {
       createCheckoutSessionDto.priceId,
       ['card'],
     );
-    this.logger.log(`Checkout session created with ID: ${session.id}`);
+    this.logger.info(`Checkout session created with ID: ${session.id}`);
     return session;
   }
 
@@ -125,9 +125,9 @@ export class StripeController {
     @Headers('stripe-signature') signature: string,
   ) {
     try {
-      this.logger.log('Handling Stripe webhook');
+      this.logger.info('Handling Stripe webhook');
       await this.stripeService.handleWebhook(signature, req.rawBody);
-      this.logger.log('Webhook handled successfully');
+      this.logger.info('Webhook handled successfully');
       res.status(200).send();
     } catch (err) {
       this.logger.error(`Webhook handling failed: ${err.message}`);

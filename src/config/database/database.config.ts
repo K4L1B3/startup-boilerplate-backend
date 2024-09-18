@@ -3,11 +3,15 @@ import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
 
 export const databaseConfig = (): TypeOrmModuleOptions => {
+
   const configService = new ConfigService();
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
 
+  // Certifique-se de que `type` nunca será undefined
+  const dbType = isProduction ? 'postgres' : 'sqlite';
+
   return {
-    type: isProduction ? 'postgres' : 'sqlite',
+    type: dbType, // Agora 'type' sempre terá um valor
     host: isProduction ? configService.get<string>('DB_HOST') : undefined,
     port: isProduction
       ? parseInt(configService.get<string>('DB_PORT'), 10)
@@ -39,4 +43,3 @@ export const databaseConfig = (): TypeOrmModuleOptions => {
   };
 };
 
-export default databaseConfig;

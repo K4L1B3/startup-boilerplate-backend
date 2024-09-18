@@ -1,7 +1,6 @@
 import {
   Inject,
   Injectable,
-  LoggerService,
   NestMiddleware,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,16 +8,16 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { Response, NextFunction } from 'express';
 import { RequestWithUser } from 'src/config/common/interfaces/request-with-user.interface';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
-  ) {}
+    @Inject('winston')
+    private readonly logger: winston.Logger,
+  ) { }
 
   async use(req: RequestWithUser, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
@@ -32,7 +31,7 @@ export class AuthMiddleware implements NestMiddleware {
 
     try {
       payload = this.jwtService.verify(token);
-      this.logger.log('Token verified successfully');
+      this.logger.info('Token verified successfully');
     } catch (e) {
       this.logger.error('Invalid token');
       throw new UnauthorizedException('Invalid token');
@@ -47,7 +46,7 @@ export class AuthMiddleware implements NestMiddleware {
       userId: user.id,
       username: user.email,
     };
-    this.logger.log(`User ${user.email} authenticated successfully`);
+    this.logger.info(`User ${user.email} authenticated successfully`);
     next();
   }
 }

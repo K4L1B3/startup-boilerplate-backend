@@ -15,7 +15,7 @@ import { StripeModule } from './modules/stripe/stripe.module';
 import { AuthMiddleware } from './modules/auth/auth.middleware';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './config/security/guards/roles.guard';
-import { winstonConfig } from './config/logs/logger';
+import { LoggerModule } from './config/logs/logger.module';
 import { AxiosModule } from './config/axios/axios.module';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -50,10 +50,12 @@ const isProduction = process.env.NODE_ENV === 'production';
     MailerModule,
     ChatModule,
     StripeModule,
-    winstonConfig,
+    LoggerModule,
     AxiosModule,
   ],
-  controllers: [AppController],
+  controllers: [
+    AppController
+  ],
   providers: [
     {
       provide: APP_GUARD,
@@ -77,5 +79,7 @@ export class AppModule {
         { path: 'stripe/webhook', method: RequestMethod.ALL },
       )
       .forRoutes({ path: '*', method: RequestMethod.ALL });
+    
+      console.log('Database configuration:', databaseConfig());
   }
 }

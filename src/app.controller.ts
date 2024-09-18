@@ -9,3 +9,4 @@ export class AppController {
   @Redirect('/swagger', 302)
   redirectToApi() {}
 }
+

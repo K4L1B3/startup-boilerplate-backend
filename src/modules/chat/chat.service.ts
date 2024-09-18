@@ -10,16 +10,16 @@ import { Chat } from './entity/chat.entity';
 import { CreateChatDto } from './dto/createChat.dto';
 import OpenAI from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectRepository(Chat)
     private chatRepository: Repository<Chat>,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
-  ) {}
+    @Inject('winston')
+    private readonly logger: winston.Logger,
+  ) { }
 
   openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -32,7 +32,7 @@ export class ChatService {
     const { prompt } = createChatDto;
 
     try {
-      this.logger.log(`Creating chat for user ID: ${userId}`);
+      this.logger.info(`Creating chat for user ID: ${userId}`);
       const response = await this.ChatGenerateResponse(prompt);
 
       const chat = this.chatRepository.create({
@@ -45,7 +45,7 @@ export class ChatService {
       });
 
       const savedChat = await this.chatRepository.save(chat);
-      this.logger.log(`Chat created with ID: ${savedChat.id}`);
+      this.logger.info(`Chat created with ID: ${savedChat.id}`);
       return savedChat;
     } catch (error) {
       this.logger.error(
@@ -56,17 +56,17 @@ export class ChatService {
   }
 
   async getChat(id: number): Promise<Chat> {
-    this.logger.log(`Fetching chat with ID: ${id}`);
+    this.logger.info(`Fetching chat with ID: ${id}`);
     return this.chatRepository.findOne({ where: { id } });
   }
 
   async getAllChats(): Promise<Chat[]> {
-    this.logger.log('Fetching all chats');
+    this.logger.info('Fetching all chats');
     return this.chatRepository.find();
   }
 
   async updateChat(chatId: number, newPrompt: string): Promise<Chat> {
-    this.logger.log(`Updating chat with ID: ${chatId}`);
+    this.logger.info(`Updating chat with ID: ${chatId}`);
     const chat = await this.getChat(chatId);
     if (!chat) {
       this.logger.warn(`Chat with ID ${chatId} not found`);
@@ -82,23 +82,23 @@ export class ChatService {
     chat.newAnswer = `\nAI: ${response}`;
 
     const updatedChat = await this.chatRepository.save(chat);
-    this.logger.log(`Chat with ID ${chatId} updated successfully`);
+    this.logger.info(`Chat with ID ${chatId} updated successfully`);
     return updatedChat;
   }
 
   async deleteChat(id: number): Promise<void> {
-    this.logger.log(`Deleting chat with ID: ${id}`);
+    this.logger.info(`Deleting chat with ID: ${id}`);
     const chat = await this.getChat(id);
     if (!chat) {
       this.logger.warn(`Chat with ID ${id} not found`);
       throw new NotFoundException('Chat not found');
     }
     await this.chatRepository.delete(id);
-    this.logger.log(`Chat with ID ${id} deleted successfully`);
+    this.logger.info(`Chat with ID ${id} deleted successfully`);
   }
 
   async renameChat(id: number, newName: string): Promise<Chat> {
-    this.logger.log(`Renaming chat with ID: ${id} to ${newName}`);
+    this.logger.info(`Renaming chat with ID: ${id} to ${newName}`);
     const chat = await this.getChat(id);
     if (!chat) {
       this.logger.warn(`Chat with ID ${id} not found`);
@@ -106,13 +106,13 @@ export class ChatService {
     }
     chat.name = newName;
     const renamedChat = await this.chatRepository.save(chat);
-    this.logger.log(`Chat with ID ${id} renamed successfully`);
+    this.logger.info(`Chat with ID ${id} renamed successfully`);
     return renamedChat;
   }
 
   async ChatGenerateResponse(prompt: string): Promise<string> {
     try {
-      this.logger.log(`Generating response for prompt: ${prompt}`);
+      this.logger.info(`Generating response for prompt: ${prompt}`);
       const messages = prompt.split('\n').map((line) => {
         if (line.startsWith('User:')) {
           return { role: 'user', content: line.replace('User: ', '') };
@@ -129,7 +129,7 @@ export class ChatService {
         max_tokens: 150,
       });
 
-      this.logger.log('Response generated successfully');
+      this.logger.info('Response generated successfully');
       return response.choices[0].message.content.trim();
     } catch (error) {
       this.logger.error(
@@ -147,7 +147,7 @@ export class ChatService {
     if (cleanPrompt.length > maxLength) {
       chatName += '...';
     }
-    this.logger.log(`Generated chat name: ${chatName}`);
+    this.logger.info(`Generated chat name: ${chatName}`);
     return chatName;
   }
 }

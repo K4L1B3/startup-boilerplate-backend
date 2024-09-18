@@ -27,16 +27,16 @@ import { ResetPassDto } from './dto/resetPass.dto';
 import { AuthenticatedRequest } from '../user/interfaces/authenticated-request';
 import { Request, Response } from 'express';
 import { RequestWithUser } from 'src/config/common/interfaces/request-with-user.interface';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
-  ) {}
+    @Inject('winston')
+    private readonly logger: winston.Logger,
+  ) { }
 
   @Post('/login')
   @ApiOperation({ summary: 'User login' })
@@ -52,7 +52,7 @@ export class AuthController {
   })
   @ApiBody({ type: LoginUserDto, description: 'User login details' })
   async login(@Body() loginUserDto: LoginUserDto) {
-    this.logger.log(`User login attempt with email: ${loginUserDto.email}`);
+    this.logger.info(`User login attempt with email: ${loginUserDto.email}`);
     return this.authService.login(loginUserDto);
   }
 
@@ -81,7 +81,7 @@ export class AuthController {
   })
   @ApiBody({ type: RegisterUserDto, description: 'User registration details' })
   async register(@Body() registerUserDto: RegisterUserDto) {
-    this.logger.log(
+    this.logger.info(
       `User registration attempt with email: ${registerUserDto.email}`,
     );
     return this.authService.register(registerUserDto);
@@ -95,7 +95,7 @@ export class AuthController {
   })
   @ApiBody({ type: EmailDto, description: 'Email for password reset request' })
   async requestPassword(@Body() email: EmailDto) {
-    this.logger.log(`Password reset request for email: ${email.email}`);
+    this.logger.info(`Password reset request for email: ${email.email}`);
     return this.authService.requestPass(email);
   }
 
@@ -118,7 +118,7 @@ export class AuthController {
     description: 'Verification code details',
   })
   async VerifyCode(@Body() verifyCode: verificationCodeDto) {
-    this.logger.log(
+    this.logger.info(
       `Verification code attempt with email: ${verifyCode.email}`,
     );
     return this.authService.verificationCode(verifyCode);
@@ -131,7 +131,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Password updated successfully' })
   @ApiBody({ type: ResetPassDto, description: 'New password details' })
   async updatePass(@Body() resetPassDto: ResetPassDto) {
-    this.logger.log(`Password update attempt for token: ${resetPassDto.token}`);
+    this.logger.info(`Password update attempt for token: ${resetPassDto.token}`);
     return this.authService.updatePass(
       resetPassDto.token,
       resetPassDto.newPass,
@@ -141,21 +141,21 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   @Get('google')
   async googleAuth(@Req() req: Request, @Res() res: Response) {
-    this.logger.log('Google auth request');
+    this.logger.info('Google auth request');
     res.redirect('/auth/google/callback');
   }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req: AuthenticatedRequest) {
-    this.logger.log('Google auth callback');
+    this.logger.info('Google auth callback');
     return this.authService.googleLogin(req);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('logout')
   async logout(@Req() req: RequestWithUser) {
-    this.logger.log(`User logout attempt for user ID: ${req.user.userId}`);
+    this.logger.info(`User logout attempt for user ID: ${req.user.userId}`);
     return this.authService.logout(req);
   }
 }

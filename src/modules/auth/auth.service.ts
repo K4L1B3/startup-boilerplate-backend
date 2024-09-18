@@ -1,7 +1,7 @@
 import {
+  forwardRef,
   Inject,
   Injectable,
-  LoggerService,
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -15,21 +15,22 @@ import { EmailMailerService } from '../../config/mail/mailer.service';
 import { CodePassService } from './codePass.service';
 import { verificationCodeDto } from './dto/VerificationCode.dto';
 import { RequestWithUser } from '../../config/common/interfaces/request-with-user.interface';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly mailerService: EmailMailerService,
     private readonly codePassService: CodePassService,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    @Inject('winston') 
+private readonly logger: winston.Logger,
   ) {}
 
   async login(loginUserDto: LoginUserDto) {
-    this.logger.log(`Login attempt for user: ${loginUserDto.username}`);
+    this.logger.info(`Login attempt for user: ${loginUserDto.username}`);
     const user = await this.validateUser(
       loginUserDto.username,
       loginUserDto.password,
@@ -47,7 +48,7 @@ export class AuthService {
   async validateUser(username: string, passwordInput: string): Promise<any> {
     const user = await this.userService.getUserByEmail(username);
     if (user && (await bcrypt.compare(passwordInput, user.password))) {
-      this.logger.log(`User validated: ${username}`);
+      this.logger.info(`User validated: ${username}`);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
@@ -57,7 +58,7 @@ export class AuthService {
   }
 
   async register(registerUserDto: RegisterUserDto) {
-    this.logger.log(`Registration attempt for user: ${registerUserDto.email}`);
+    this.logger.info(`Registration attempt for user: ${registerUserDto.email}`);
     const verifyEmail = await this.userService.getUserByEmail(
       registerUserDto.email,
     );
@@ -116,7 +117,7 @@ export class AuthService {
   }
 
   async requestPass(email: EmailDto) {
-    this.logger.log(`Password reset request for email: ${email.email}`);
+    this.logger.info(`Password reset request for email: ${email.email}`);
     const verifyEmail = await this.userService.getRequestUserByEmail(email);
 
     if (verifyEmail !== null) {
@@ -137,7 +138,7 @@ export class AuthService {
 
   async verificationCode(code: verificationCodeDto) {
     try {
-      this.logger.log(`Verification code attempt for email: ${code.email}`);
+      this.logger.info(`Verification code attempt for email: ${code.email}`);
       const getUserIdByCode = await this.codePassService.checkUserByCode(code);
 
       if (!getUserIdByCode) {
@@ -153,7 +154,7 @@ export class AuthService {
 
       if (isValidateCode.success) {
         const token = this.jwtService.sign({ userId: getUserIdByCode.userId });
-        this.logger.log('Verification code validated successfully');
+        this.logger.info('Verification code validated successfully');
         return {
           success: true,
           message: 'Código verificado com sucesso.',
@@ -179,7 +180,7 @@ export class AuthService {
     try {
       const decoded = this.jwtService.verify(token);
       const userId = decoded.userId;
-      this.logger.log(`Password update attempt for user ID: ${userId}`);
+      this.logger.info(`Password update attempt for user ID: ${userId}`);
       const user = await this.userService.getUserById(userId);
       if (!user) {
         this.logger.error('User not found');
@@ -189,7 +190,7 @@ export class AuthService {
       const hashedPassword = await bcrypt.hash(newPassword, salt);
       await this.userService.patchUser(userId, { password: hashedPassword });
 
-      this.logger.log('Password updated successfully');
+      this.logger.info('Password updated successfully');
       return { success: true, message: 'Senha atualizada com sucesso.' };
     } catch (error) {
       this.logger.error(`Error updating password: ${error.message}`);
@@ -198,7 +199,7 @@ export class AuthService {
   }
 
   async logout(req: RequestWithUser) {
-    this.logger.log(`User logout attempt for user ID: ${req.user.userId}`);
+    this.logger.info(`User logout attempt for user ID: ${req.user.userId}`);
     req.logout();
     return { message: 'Logged out successfully' };
   }

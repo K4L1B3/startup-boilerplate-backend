@@ -1,14 +1,14 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable, Inject, LoggerService } from '@nestjs/common';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
 import { join } from 'path';
 
 @Injectable()
 export class EmailMailerService {
   constructor(
     private readonly mailerService: MailerService,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    @Inject('winston')
+    private readonly logger: winston.Logger,
   ) {}
 
   async sendEmail(
@@ -18,7 +18,7 @@ export class EmailMailerService {
     context?: object,
   ): Promise<void> {
     const templatePath = join(__dirname, template);
-    this.logger.log(`Sending email to ${to} using template ${templatePath}`);
+    this.logger.info(`Sending email to ${to} using template ${templatePath}`);
     try {
       await this.mailerService.sendMail({
         to,
@@ -26,7 +26,7 @@ export class EmailMailerService {
         template: templatePath,
         context,
       });
-      this.logger.log(`Email sent to ${to} with subject: ${subject}`);
+      this.logger.info(`Email sent to ${to} with subject: ${subject}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}: ${error.message}`);
     }
@@ -36,7 +36,7 @@ export class EmailMailerService {
     const subject = 'PandoraChat: Bem vindo ao PandoraChat';
     const template = '../../../assets/Templates/WelcomeEmail.html';
 
-    this.logger.log(`Sending welcome email to ${to}`);
+    this.logger.info(`Sending welcome email to ${to}`);
     await this.sendEmail(to, subject, template);
   }
 
@@ -45,7 +45,7 @@ export class EmailMailerService {
     const template = '../../../assets/Templates/VerifyEmail.html';
     const context = { code };
 
-    this.logger.log(`Sending verification email to ${to} with code: ${code}`);
+    this.logger.info(`Sending verification email to ${to} with code: ${code}`);
     await this.sendEmail(to, subject, template, context);
   }
 }

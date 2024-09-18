@@ -1,3 +1,5 @@
+// src/main.ts
+
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -7,77 +9,87 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
 import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
-import {
-  WINSTON_MODULE_NEST_PROVIDER,
-  WinstonModule,
-  utilities as nestWinstonModuleUtilities,
-} from 'nest-winston';
-import * as winston from 'winston';
-import { AllExceptionsFilter } from './config/logs/http-exception.filter';
+import logger from './config/logs/logger';
+
+// Captura de exceções não tratadas
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  logger.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection:', reason);
+});
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: WinstonModule.createLogger({
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.errors({ stack: true }),
-            winston.format.splat(),
-            winston.format.json(),
-            nestWinstonModuleUtilities.format.nestLike(), // Formato estilo NestJS
-          ),
-        }),
-        new winston.transports.File({
-          filename: 'combined.log',
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.errors({ stack: true }),
-            winston.format.splat(),
-            winston.format.json(),
-          ),
-        }),
-      ],
-    }),
+  try {
+    logger.info('Iniciando a aplicação...');
+    logger.info('Antes de NestFactory.create');
+
+    const app = await NestFactory.create(AppModule, {
+      logger: false,
+    });
+    logger.info('Depois de NestFactory.create');
+
+    app.useLogger(logger);
+    logger.info('Logger configurado.');
+
+    // Configuração do Swagger
+    logger.info('Configurando Swagger...');
+    const config = new DocumentBuilder()
+      .setTitle('Startup API')
+      .setDescription('API de boilerplate para iniciar projetos de startups')
+      .setVersion('1.0')
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        'access-token',
+      )
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('swagger', app, document);
+    logger.info('Swagger configurado.');
+
+    // Proteção para a aplicação
+    app.use(helmet());
+    logger.info('Helmet configurado.');
+
+    // Habilitando o CORS
+    app.enableCors();
+    logger.info('CORS habilitado.');
+
+    // Middleware para capturar o raw body necessário para a verificação do webhook
+    app.use(
+      bodyParser.json({
+        verify: (req: any, res, buf: Buffer) => {
+          if (req.originalUrl.startsWith('/stripe/webhook')) {
+            req.rawBody = buf;
+          }
+        },
+      }),
+    );
+    logger.info('Body parser configurado.');
+
+    // Use ValidationPipe globalmente
+    app.useGlobalPipes(new ValidationPipe());
+    logger.info('ValidationPipe configurado.');
+
+    const port = process.env.RUN_PORT || 3000;
+    logger.info(`Iniciando a aplicação na porta ${port}...`);
+    await app.listen(port);
+    logger.info(`Aplicação está rodando na porta ${port}`);
+  } catch (error) {
+    console.error('Erro ao iniciar a aplicação:', error);
+    logger.error('Erro ao iniciar a aplicação:', error);
+  }
+
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
   });
-  // Configuração do Swagger
-  const config = new DocumentBuilder()
-    .setTitle('Startup API')
-    .setDescription('API de boilerplate para iniciar projetos de startups')
-    .setVersion('1.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'access-token',
-    )
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger', app, document);
-
-  //Proteção para a aplicação
-  app.use(helmet());
-
-  //Habilitando o CORS
-  app.enableCors();
-
-  // Middleware para capturar o raw body necessário para a verificação do webhook
-  app.use(
-    bodyParser.json({
-      verify: (req: any, res, buf: Buffer) => {
-        if (req.originalUrl.startsWith('/stripe/webhook')) {
-          req.rawBody = buf;
-        }
-      },
-    }),
-  );
-
-  // Use ValidationPipe globally
-  app.useGlobalPipes(new ValidationPipe());
-
-  // Adicionando o filtro global de exceções
-  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
-  app.useGlobalFilters(new AllExceptionsFilter(logger));
-
-  await app.listen(process.env.RUN_PORT);
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
 }
 
 bootstrap();
